@@ -10,32 +10,14 @@ s.write(str.encode("c[1,0,5]\n")) #set number of retransmissions to 5
 time.sleep(0.1) #wait for settings to be applied  
 s.write(str.encode("c[0,1,10]\n")) #set FEC threshold to 30 (apply FEC to packets with payload >= 30)  
 time.sleep(0.1) #wait for settings to be applied  
+# s2.write(str.encode("c[0,2,4]\n")) #set Channel busy threshold (CWmin) 
+# time.sleep(0.1) #wait for settings to be applied  
 
 # s.write(str.encode("m[hello world!\0,CD]\n")) #send message to device with address CD  
 # print("Message sent to CD...")
 time.sleep(0.1)
-# --------------------------------------------------------------
-# PORT = "COM4"       # your AB port
-# ADDR = "AB"
-# TARGET = "FF"
 
-# # --- reader thread ---
-# def reader():
-#     msg = ""
-#     while True:
-#         try:
-#             byte = s.read(1)
-#             if not byte:
-#                 continue
-#             val = chr(byte[0])
-#             if val == "\n":
-#                 if msg.startswith("m[R") or True:
-#                     print(f"\n📩 Received: {msg}")
-#                 msg = ""
-#             else:
-#                 msg += val
-#         except Exception:
-#             continue
+# --------------------------------------------------------------
 
 # threading.Thread(target=reader, daemon=True).start()
 def receive():
