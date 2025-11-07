@@ -10,23 +10,15 @@ s2.write(str.encode("c[1,0,5]\n")) #set number of retransmissions to 5
 time.sleep(0.1) #wait for settings to be applied  
 s2.write(str.encode("c[0,1,10]\n")) #set FEC threshold to 30 (apply FEC to packets with payload >= 30)  
 time.sleep(0.1) #wait for settings to be applied  
-# s2.write(str.encode("c[0,2,4]\n")) #set Channel busy threshold (CWmin) 
-# time.sleep(0.1) #wait for settings to be applied  
 
 
-# s2.write(str.encode("m[hello world!\0,CD]\n")) #send message to device with address CD  
-# print("Message sent to CD...")
-
-# --------------------------------------------------------------
-
-#read from the device’s serial port (should be done in a separate program):  
 def receive():
   message = ""  
   while True: #while not terminated  
     try:  
-      byte = s2.read(1)
-      if not byte:
-        continue #read one byte (blocks until data available or timeout reached)  
+      byte = s2.read(1) #read one byte (blocks until data available or timeout reached)  
+      if not byte: #make it so we can wait to receive
+        continue 
       val = chr(byte[0])  
       if val=='\n': #if termination character reached  
         if(message.startswith("m[R,D")):
@@ -43,13 +35,14 @@ def receive():
 
 threading.Thread(target=receive, daemon=True).start()
 
-print("Type a message and press Enter (Ctrl+C to exit):")
+# input loop
+print("Type a message:")
 while True:
     try:
         text = input("> ")
         if text.strip() == "":
             continue
-        s2.write(str.encode(f"m[{text}\0,AB]\n")) #send message to device with address CD  
+        s2.write(str.encode(f"m[{text}\0,AB]\n")) 
         time.sleep(0.15)
     except KeyboardInterrupt:
         break
