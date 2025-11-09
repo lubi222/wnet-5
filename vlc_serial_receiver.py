@@ -1,7 +1,8 @@
 import serial  
 import threading
 import time
-s2 = serial.Serial('COM6',115200,timeout=1) #opens a serial port (resets the device!)  
+import sys
+s2 = serial.Serial('COM5',115200,timeout=1) #opens a serial port (resets the device!)  
 time.sleep(2) #give the device some time to startup (2 seconds)  
 #write to the device’s serial port  
 s2.write(str.encode("a[CD]\n")) #set the device address to AB  
@@ -11,8 +12,8 @@ time.sleep(0.1) #wait for settings to be applied
 s2.write(str.encode("c[0,1,10]\n")) #set FEC threshold to 30 (apply FEC to packets with payload >= 30)  
 time.sleep(0.1) #wait for settings to be applied  
 
-# s2.write(str.encode("c[0,2,4]\n")) #set Channel busy threshold (CWmin) 
-# time.sleep(0.1) #wait for settings to be applied  
+s2.write(str.encode("c[0,2,4]\n")) #set Channel busy threshold (CWmin) 
+time.sleep(0.1) #wait for settings to be applied  
 
 
 # s2.write(str.encode("m[hello world!\0,CD]\n")) #send message to device with address CD  

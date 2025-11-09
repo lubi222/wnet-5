@@ -1,4 +1,26 @@
-from vlc_serial import VLCDevice
+try:
+    from vlc_serial import VLCDevice
+except Exception:
+    # Fallback stub when vlc_serial is not available (e.g., editor linting or missing module).
+    # This provides the minimal API used by vlc_chat.py so the file can be opened/run without import errors.
+    class VLCDevice:
+        def __init__(self, port, address):
+            self.port = port
+            self.address = address
+
+        def open(self):
+            print(f"[{self.address}] (stub) device opened on port {self.port}")
+
+        def start_reader(self):
+            print(f"[{self.address}] (stub) reader started")
+
+        def send_message(self, msg, peer):
+            # In the real implementation this would send over a serial link.
+            print(f"[{self.address}] (stub) -> {peer}: {msg}")
+
+        def close(self):
+            print(f"[{self.address}] (stub) device closed")
+
 import threading, time
 
 

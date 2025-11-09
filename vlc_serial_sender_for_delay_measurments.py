@@ -1,6 +1,8 @@
 import serial  
 import threading
 import time
+import matplotlib.pyplot as plt
+import numpy as np
 s = serial.Serial('COM6',115200,timeout=1) #opens a serial port (resets the device!)  
 time.sleep(2) #give the device some time to startup (2 seconds)  
 #write to the device’s serial port  
@@ -17,6 +19,7 @@ time.sleep(0.1) #wait for settings to be applied
 
 # --------------------------------------------------------------
 done_event = threading.Event()
+received_event = threading.Event()
 
 # threading.Thread(target=reader, daemon=True).start()
 def receive():
@@ -30,6 +33,9 @@ def receive():
       if val=='\n': #if termination character reached  
         if(message.startswith("m[R,D")):
           print("", message[6:-1], end='') #print message (cause it ends in newline)  
+        elif(message.startswith("m[R,A")):
+          print("ACK received")
+          received_event.set()
         elif(message.startswith("s[R,D")):
           print(f" (from: {message[6:8]})")
         elif(message.startswith("m[D")):
@@ -48,30 +54,47 @@ def receive():
 
 
 def auto_sender(dest="CD"):
-    seq = 0
-    while True:
+  RTT = np.empty(20)
+  seq = 0
+  while seq < 20:
         try:
+          cmd = str.encode(f"m[MSG{seq}\0,CD]\n")
+          s.write(cmd)
+          sentTime = time.time()
+          print("auto_sender SENT:", cmd)
           # wait for the m[D] notification from receive()
+          # ensure no spaces in address, include null terminator
           done_event.wait()
           done_event.clear()
-          seq += 1
-          # ensure no spaces in address, include null terminator
-          cmd = str.encode(f"m[MSG{seq}\0,CD]\n")
-          
-          s.write(cmd)
-
-          print("auto_sender SENT:", cmd)
+          received_event.wait()
+          receivedTime = time.time()
+          received_event.clear()
+          print("RTT = ", receivedTime-sentTime, "\n")
+          RTT[seq] = receivedTime-sentTime
           time.sleep(0.02)
+          seq += 1
             # optionally log/send timestamp here
         except Exception as e:
             print("write error:", e)
         # small guard delay to protect MCU/USB stack
+      # make data
+
+    # plot
+  fig, ax = plt.subplots()
+  ax.plot(np.linspace(0,19,20),RTT)
+  ax.set_title("RTT for 20 messages")
+  ax.set_ylabel("RTT [s]")
+  ax.set_xlabel("seq number")
+  plt.figtext(0, 0.94, "Mean = {}\nVariance = {}".format(np.mean(RTT), np.var(RTT)))
+  plt.savefig("RTT1.png")
+      
+    
         
 
 
 threading.Thread(target=receive, daemon=True).start()
 threading.Thread(target=auto_sender, daemon=True).start()
-s.write(str.encode("m[hello world!\0,CD]\n")) #send message to device with address CD  
+#s.write(str.encode("m[hello world!\0,CD]\n")) #send message to device with address CD  
 print("initial message sent to CD...")
 # time.sleep(0.1)
 
