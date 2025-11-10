@@ -12,7 +12,7 @@ s.write(str.encode("c[1,0,5]\n")) #set number of retransmissions to 5
 time.sleep(0.1) #wait for settings to be applied  
 s.write(str.encode("c[0,1,10]\n")) #set FEC threshold to 30 (apply FEC to packets with payload >= 30)  
 time.sleep(0.1) #wait for settings to be applied  
-s.write(str.encode("c[0,2,16]\n")) #set Channel busy threshold (CWmin) 
+s.write(str.encode("c[0,2,8]\n")) #set Channel busy threshold (CWmin) 
 time.sleep(0.1) #wait for settings to be applied  
 
 
@@ -54,24 +54,29 @@ def receive():
 
 
 def auto_sender(dest="CD"):
-  RTT = np.empty(20)
+  msg = "M" * 180
+  rtt = np.empty(20)
+  throughput = np.zeros(20)
   seq = 0
+  sentTime1 = 0
   while seq < 20:
         try:
-          cmd = str.encode(f"m[MSG{seq}\0,CD]\n")
+          cmd = str.encode(f"m["+msg+"\0,CD]\n")
+          if seq != 0:  
+            throughput[seq] = 8/(time.time() - sentTime - 0.2)
           s.write(cmd)
           sentTime = time.time()
           print("auto_sender SENT:", cmd)
-          # wait for the m[D] notification from receive()
-          # ensure no spaces in address, include null terminator
           done_event.wait()
           done_event.clear()
-          received_event.wait()
-          receivedTime = time.time()
+          time.sleep(0.2)
+          if(received_event.is_set()):
+            receivedTime = time.time()
+          else:
+            receivedTime = sentTime
           received_event.clear()
-          print("RTT = ", receivedTime-sentTime, "\n")
-          RTT[seq] = receivedTime-sentTime
-          time.sleep(0.02)
+          print("RTT = ", max(receivedTime - sentTime - 0.2, 0), "\n")
+          rtt[seq] = max(receivedTime - sentTime - 0.2, 0)
           seq += 1
             # optionally log/send timestamp here
         except Exception as e:
@@ -81,12 +86,14 @@ def auto_sender(dest="CD"):
 
     # plot
   fig, ax = plt.subplots()
-  ax.plot(np.linspace(0,19,20),RTT)
-  ax.set_title("RTT for 20 messages")
-  ax.set_ylabel("RTT [s]")
+  ax.plot(np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]),rtt, label = 'RTT [s]')
+  ax.plot(np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]),throughput, label = 'Throughput [b/s]')
+  ax.legend()
+  ax.set_title("RTT and throughput for 20 messages with 180 byte payload at 30jcm")
+  ax.set_ylabel("RTT [s] and throughput [b/s]")
   ax.set_xlabel("seq number")
-  plt.figtext(0, 0.94, "Mean = {}\nVariance = {}".format(np.mean(RTT), np.var(RTT)))
-  plt.savefig("RTT1.png")
+  plt.figtext(0, 0.94, "RTT: mean: {}   variance: {}\nThroughput: mean: {}    variance: {}".format(np.mean(rtt), np.var(rtt), np.mean(throughput[1:]), np.var(throughput[1:])))
+  plt.savefig("RTT_THRPT_180BYTE_7.png")
       
     
         

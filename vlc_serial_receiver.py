@@ -32,7 +32,8 @@ def receive():
       val = chr(byte[0])  
       if val=='\n': #if termination character reached  
         if(message.startswith("m[R,D")):
-          print("", message[6:-1], end='') #print message (cause it ends in newline)  
+          #print("", message[6:-1], end='') #print message (cause it ends in newline)  
+          print("msg received")
           # pass
         elif(message.startswith("s[R,D")):
            print(f" (from: {message[6:8]})")

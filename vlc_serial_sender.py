@@ -56,12 +56,12 @@ def auto_sender(dest="CD"):
           done_event.clear()
           seq += 1
           # ensure no spaces in address, include null terminator
-          cmd = str.encode(f"m[MSG{seq}\0,CD]\n")
+          cmd = str.encode(f"m[M\0,CD]\n")
           
           s.write(cmd)
 
           print("auto_sender SENT:", cmd)
-          time.sleep(0.02)
+          time.sleep(0.01)
             # optionally log/send timestamp here
         except Exception as e:
             print("write error:", e)
